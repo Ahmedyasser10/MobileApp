@@ -46,10 +46,9 @@ Future<String> uploadProfilePhoto(File imageFile, String userId) async {
     final fileBytes = await imageFile.readAsBytes();
 
     // Upload the image to Supabase Storage
-    final response = await supabase.storage
-        .from('profileimages')
+    await supabase.storage
+        .from('profileimages') // Ensure the bucket name is correct
         .uploadBinary(fileName, fileBytes);
-
 
     // Get the public URL of the uploaded image
     final imageUrl = supabase.storage
@@ -58,6 +57,7 @@ Future<String> uploadProfilePhoto(File imageFile, String userId) async {
 
     return imageUrl;
   } catch (e) {
+    print('Error uploading profile photo: $e'); // Log the error
     throw Exception('Failed to upload profile photo: $e');
   }
 }
@@ -85,17 +85,17 @@ Future<void> updateUserMetadata({
           'student_id': studentId,
           'gender': gender,
           'level': level,
-          'profile_image_url': profileImageUrl,
+          'profile_image_url': profileImageUrl, // Ensure this is set
         },
       ),
     );
 
     print('User metadata updated successfully!');
   } catch (e) {
+    print('Error updating metadata: $e'); // Log the error
     throw Exception('Failed to update user metadata: $e');
   }
 }
-
 /// Log out the user
 Future<void> logout() async {
   await supabase.auth.signOut();

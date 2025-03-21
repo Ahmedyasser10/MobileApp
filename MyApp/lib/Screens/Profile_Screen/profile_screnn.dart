@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:mobile_ass/services/auth.dart';
+import 'dart:io';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -15,6 +17,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _genderController = TextEditingController();
   final _levelController = TextEditingController();
 
+  File? _profileImage;
+  final ImagePicker _picker = ImagePicker();
   bool _isLoading = false;
 
   @override
@@ -35,6 +39,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    final pickedFile = await _picker.pickImage(source: source);
+    if (pickedFile != null) {
+      setState(() {
+        _profileImage = File(pickedFile.path);
+      });
+    }
+  }
+
   Future<void> _saveProfile() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
@@ -44,12 +57,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       try {
         final user = supabase.auth.currentUser;
         if (user != null) {
+          String? profileImageUrl;
+          if (_profileImage != null) {
+            // Upload the profile photo and get the URL
+            profileImageUrl = await uploadProfilePhoto(_profileImage!, user.id);
+          }
+
           // Update user metadata
           await updateUserMetadata(
             name: _nameController.text,
             studentId: _studentIdController.text,
             gender: _genderController.text,
             level: _levelController.text,
+            profileImageUrl: profileImageUrl,
           );
 
           ScaffoldMessenger.of(context).showSnackBar(
@@ -70,6 +90,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final user = supabase.auth.currentUser;
+    final profileImageUrl = user?.userMetadata?['profile_image_url'];
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Edit Profile'),
@@ -80,6 +103,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
           key: _formKey,
           child: Column(
             children: [
+              GestureDetector(
+                onTap: () {
+                  showModalBottomSheet(
+                    context: context,
+                    builder: (context) => Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        ListTile(
+                          leading: Icon(Icons.camera),
+                          title: Text('Take Photo'),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _pickImage(ImageSource.camera);
+                          },
+                        ),
+                        ListTile(
+                          leading: Icon(Icons.photo_library),
+                          title: Text('Choose from Gallery'),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _pickImage(ImageSource.gallery);
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                child: CircleAvatar(
+                  radius: 50,
+                  backgroundImage: _profileImage != null
+                      ? FileImage(_profileImage!)
+                      : profileImageUrl != null
+                      ? NetworkImage(profileImageUrl)
+                      : AssetImage('assets/default_profile.png') as ImageProvider,
+                ),
+              ),
               SizedBox(height: 20),
               TextFormField(
                 controller: _nameController,
