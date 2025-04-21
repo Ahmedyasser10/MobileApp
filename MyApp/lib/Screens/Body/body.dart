@@ -47,27 +47,27 @@ class _HomeBodyState extends State<HomeBody> {
     return isLoading
         ? const Center(child: CircularProgressIndicator())
         : meals.isEmpty
-            ? const Center(child: Text("No meals found"))
-            : ListView.builder(
-                itemCount: meals.length,
-                itemBuilder: (context, index) {
-                  final meal = meals[index];
-                  return Card(
-                    margin: const EdgeInsets.all(10),
-                    child: ListTile(
-                      leading: Image.network(
-                        meal['strMealThumb'],
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) =>
-                            const Icon(Icons.broken_image, size: 60),
-                      ),
-                      title: Text(meal['strMeal']),
-                      subtitle: Text(meal['strCategory'] ?? 'No Category'),
-                    ),
-                  );
-                },
-              );
+        ? const Center(child: Text("No meals found"))
+        : ListView.builder(
+      itemCount: meals.length,
+      itemBuilder: (context, index) {
+        final meal = meals[index];
+        return Card(
+          margin: const EdgeInsets.all(10),
+          child: ListTile(
+            leading: Image.network(
+              meal['strMealThumb'],
+              width: 60,
+              height: 60,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+              const Icon(Icons.broken_image, size: 60),
+            ),
+            title: Text(meal['strMeal']),
+            subtitle: Text(meal['strCategory'] ?? 'No Category'),
+          ),
+        );
+      },
+    );
   }
 }

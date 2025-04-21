@@ -63,6 +63,7 @@ Future<String> uploadProfilePhoto(File imageFile, String userId) async {
 }
 
 /// Update user metadata (including profile photo URL)
+/// Update user metadata (including profile photo URL)
 Future<void> updateUserMetadata({
   String? name,
   String? studentId,
@@ -76,23 +77,37 @@ Future<void> updateUserMetadata({
       throw Exception('User is not logged in');
     }
 
+    // Get current metadata
+    final currentMetadata = Map<String, dynamic>.from(user.userMetadata ?? {});
+
+    // Prepare updated metadata
+    final updatedMetadata = {
+      // Preserve all existing metadata
+      ...currentMetadata,
+      // Only update fields that are provided (non-null)
+      if (name != null) 'name': name,
+      if (studentId != null) 'student_id': studentId,
+      if (gender != null) 'gender': gender,
+      if (level != null) 'level': level,
+      // Handle profile image URL carefully
+      if (profileImageUrl != null) 'profile_image_url': profileImageUrl,
+    };
+
+    // Ensure we don't accidentally remove the profile image URL
+    if (profileImageUrl == null && currentMetadata['profile_image_url'] != null) {
+      updatedMetadata['profile_image_url'] = currentMetadata['profile_image_url'];
+    }
+
     // Update user metadata
     await supabase.auth.updateUser(
       UserAttributes(
-        data: {
-          ...user.userMetadata ?? {},
-          'name': name,
-          'student_id': studentId,
-          'gender': gender,
-          'level': level,
-          'profile_image_url': profileImageUrl, // Ensure this is set
-        },
+        data: updatedMetadata,
       ),
     );
 
     print('User metadata updated successfully!');
   } catch (e) {
-    print('Error updating metadata: $e'); // Log the error
+    print('Error updating metadata: $e');
     throw Exception('Failed to update user metadata: $e');
   }
 }
